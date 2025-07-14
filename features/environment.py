@@ -9,7 +9,7 @@ from pageobjects.products_page import ProductsPage
 from pageobjects.base_page import BasePage
 
 from pageobjects.shopping_cart_page import ShoppingCartPage
-from pageobjects.checkout_your_info_page import CheckoutYourInformationPage
+from pageobjects.checkout_your_info_page import CheckoutYourInfoPage
 from pageobjects.checkout_overview_page import CheckoutOverviewPage
 from pageobjects.checkout_complete_page import CheckoutCompletePage
 
@@ -50,7 +50,7 @@ def before_all(context):
     context.base_url = context.login_page.URL 
 
     context.shopping_cart_page = ShoppingCartPage(context.driver)
-    context.checkout_info_page = CheckoutYourInformationPage(context.driver)
+    context.checkout_info_page = CheckoutYourInfoPage(context.driver)
     context.checkout_overview_page = CheckoutOverviewPage(context.driver)
     context.checkout_complete_page = CheckoutCompletePage(context.driver)
 
