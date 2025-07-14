@@ -2,11 +2,16 @@
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, WebDriverException # Import WebDriverException for general driver errors
 
 from pageobjects.login_page import LoginPage
 from pageobjects.products_page import ProductsPage
 from pageobjects.base_page import BasePage
+
+from pageobjects.shopping_cart_page import ShoppingCartPage
+from pageobjects.checkout_your_info_page import CheckoutYourInformationPage
+from pageobjects.checkout_overview_page import CheckoutOverviewPage
+from pageobjects.checkout_complete_page import CheckoutCompletePage
 
 def before_all(context):
     options = webdriver.ChromeOptions()
@@ -18,26 +23,59 @@ def before_all(context):
         "safeBrowse.enabled": True,
         "safeBrowse.malware.enabled": False,
         "profile.default_content_setting_values.notifications": 2,
+        "profile.managed_default_content_settings.images": 1,
         "profile.password_manager_leak_detection": False
     }
     
     options.add_experimental_option("prefs", prefs)
 
+    options.add_argument("--disable-features=EnableEphemeralBadges,PasswordSuggestion,AutofillServerPredictions")
+    options.add_argument("--password-manager-testing")
+    options.add_argument("--no-default-browser-check")
+    options.add_argument("--no-first-run")
+    options.add_argument("--disable-infobars")
+    options.add_argument("--disable-popup-blocking")
+    options.add_argument("--disable-translate")
+    options.add_argument("--disable-save-password-bubble")
+    options.add_argument("--disable-notifications")
+    
     service = Service()
     context.driver = webdriver.Chrome(service=service, options=options)
     context.driver.implicitly_wait(10)
 
+    # Initialize all page objects in before_all so they are available in context
     context.login_page = LoginPage(context.driver)
     context.products_page = ProductsPage(context.driver)
     context.base_page = BasePage(context.driver)
     context.base_url = context.login_page.URL 
 
+    context.shopping_cart_page = ShoppingCartPage(context.driver)
+    context.checkout_info_page = CheckoutYourInformationPage(context.driver)
+    context.checkout_overview_page = CheckoutOverviewPage(context.driver)
+    context.checkout_complete_page = CheckoutCompletePage(context.driver)
+
 def before_scenario(context, scenario):
-    context.driver.delete_all_cookies()
+    context.driver.execute_script("window.localStorage.clear();")
+    context.driver.execute_script("window.sessionStorage.clear();")
+    print("Cleared localStorage and sessionStorage.")
+    context.driver.delete_all_cookies() 
     context.driver.get(context.base_url)
     context.driver.maximize_window()
+    print(f"Navigated to base URL: {context.base_url}")
 
 def after_scenario(context, scenario):
+    try:
+        if hasattr(context, 'driver') and context.driver.session_id:
+            if context.driver.current_url != context.base_url + "inventory.html":
+                context.driver.get(context.base_url + "inventory.html")
+                context.products_page.wait_for_element(context.products_page.SPAN_TITLE_CSS, timeout=10)
+
+            context.products_page.remove_all_items_from_cart() 
+            print("Cart successfully cleared in after_scenario.")
+
+    except (WebDriverException, Exception) as e:
+        print(f"WARNING: Failed to clear cart in after_scenario: {e}")
+
     if scenario.status == 'failed':
         scenario_name = scenario.name.replace(" ", "_").replace("/", "_")
         screenshot_dir = "allure_reports/screenshots" 

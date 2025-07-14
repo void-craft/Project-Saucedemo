@@ -12,7 +12,7 @@ def enter_username(context):
 
 @when('the user adds the items to the cart')
 def add_items(context):
-    context.products_page.add_item_to_cart_by_name("sauce-labs-backpack")
+    context.products_page.add_item_to_cart()
 
 @then('the user should see the total number of cart items')
 def validate_total_items(context):
