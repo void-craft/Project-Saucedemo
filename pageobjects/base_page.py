@@ -1,4 +1,4 @@
-from selenium.common import NoSuchElementException
+from selenium.common import NoSuchElementException, TimeoutException, ElementClickInterceptedException
 from selenium.webdriver import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait

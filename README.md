@@ -1,42 +1,87 @@
-# Project-saucedemo
+# Project-SauceDemo: Selenium BDD Automation Framework
 
-The Saucedemo project is a Selenium test automation project using the Behave framework to automate functional tests for the Saucedemo e-commerce website.
+This project is a comprehensive Selenium test automation framework utilizing **Behave BDD** and the **Page Object Model (POM)**. It automates functional tests for the SauceDemo e-commerce website, ensuring key functionalities work as expected and identifying any defects.
 
-It includes feature files written in the Gherkin language, step definitions in Python, and page object model design pattern to interact with the website .
+The framework is designed for **readability, maintainability, and scalability**, following industry best practices for robust test automation.
 
-The project aims to ensure the functionality of the website is working as expected, and to identify and report any defects found during the testing process.
+## Key Technologies
 
-It uses allure to generate reports.
+* **Python:** The primary programming language.
+* **Selenium WebDriver:** Browser automation.
+* **Behave:** BDD framework (Gherkin syntax).
+* **Allure Behave:** Rich test reporting.
+* **WebDriver Manager:** Automated driver management.
 
-* The packages used in this framework are:
-  
-  1. Python
-  2. Selenium
-  3. behave
-  4. allure-behave
+## Framework Principles
 
+* **Behavior-Driven Development (BDD):** Human-readable test scenarios.
+* **Page Object Model (POM):** Separates UI interaction from test logic.
+* **Modular Design:** Clear separation of features, steps, and pages.
+* **Robustness:** Includes "safe interaction" methods to handle unexpected browser popups.
 
-* BDD behave is used to test the following features:
+## Features Automated
 
-  1. Login
-      a. Locked out feature
-      b. Performance errors
-      c. Glitches
-      d. Error free login
-  2. Adding items to cart
-  3. Removing items from cart
+1.  **User Login:** Successful, locked out, performance glitch, problem user scenarios.
+2.  **Product Management:** Adding and removing items from the cart.
+3.  **Checkout Process:** Successful checkout and invalid/missing information handling.
 
-* Commands used to run the test cases and to generate reports are:  
+## Project Structure
+```
+Project-SauceDemo/
+├── features/                 # Gherkin .feature files & Behave hooks (environment.py)
+│   └── steps/                # Python step definitions
+├── pageobjects/              # Page Object Model classes (BasePage, LoginPage, ProductsPage, Checkout pages)
+├── allure_reports/           # Generated Allure raw test data
+├── venv/                     # Python virtual environment (ignored by Git)
+├── .gitignore                # Git ignored files
+└── requirements.txt          # Project dependencies
+```
 
-   a. The results are generated using allure-behave:
+## Setup & Run
 
-   behave -f allure_behave.formatter:AllureFormatter -o allure_reports/login_report ./features/login.feature
-   behave -f allure_behave.formatter:AllureFormatter -o allure_reports/add_to_cart_report ./features/add_to_cart.feature
-   behave -f allure_behave.formatter:AllureFormatter -o allure_reports/remove_from_cart ./features/remove_from_cart.feature
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/your-username/Project-SauceDemo.git](https://github.com/your-username/Project-SauceDemo.git)
+    cd Project-SauceDemo
+    ```
+2.  **Setup Virtual Environment & Install Dependencies:**
+    ```bash
+    python -m venv venv
+    # On Windows: .\venv\Scripts\activate
+    # On macOS/Linux: source venv/bin/activate
+    pip install -r requirements.txt
+    ```
+3.  **Install Allure Commandline (for HTML reports):**
+    * `brew install allure` (macOS)
+    * `scoop install allure` (Windows)
+    * `sudo apt-get install allure-commandline` (Linux)
 
+### Run Tests
 
-   b. Then they are converted to html files with the command:
+* **All Tests:**
+    ```bash
+    behave --no-capture
+    ```
+* **Specific Scenario (by tag):**
+    ```bash
+    behave -t successful_checkout
+    ```
+    *(Use `-t tag1 -t tag2` for AND logic, `-t tag1,tag2` for OR logic, `-t ~tag` to exclude.)*
 
-   allure serve allure_reports/login_report
-   allure serve allure_reports/add_to_cart_report
-   allure serve allure_reports/remove_from_cart
+### Generate & View Reports
+
+```bash
+rm -rf allure_reports/* # (Optional: clear old reports)
+behave -f allure_behave.formatter:AllureFormatter -o allure_reports/ ./features/
+allure serve allure_reports/
+```
+### Troubleshooting
+SessionNotCreatedException (ChromeDriver): Ensure selenium is updated (pip install --upgrade selenium).
+
+Browser Popups: Framework uses ChromeOptions and BasePage "safe actions" to dismiss.
+
+TimeoutException (Element not found): Verify locators in Page Objects and ensure sufficient wait times.
+
+AttributeError / NameError: Check Python imports and method/variable names for typos.
+
+Cart State Not Clean: before_scenario clears localStorage, sessionStorage, and cookies to ensure a fresh cart state.

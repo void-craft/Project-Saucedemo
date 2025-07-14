@@ -1,0 +1,13 @@
+# Virtual environment
+venv/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Generated reports and results
+allure-results/
+allure_reports/
+
+# Operating System generated files
+Thumbs.db # Windows
