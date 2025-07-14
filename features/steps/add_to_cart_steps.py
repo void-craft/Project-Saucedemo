@@ -9,7 +9,6 @@ from pageobjects.base_page import BasePage
 def enter_username(context):
     context.login_page.enter_username(context.login_page.STANDARD_USERNAME)
 
-
 @when('the user adds the items to the cart')
 def add_items(context):
     context.products_page.add_item_to_cart()

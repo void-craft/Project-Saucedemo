@@ -55,13 +55,11 @@ def before_all(context):
     context.checkout_complete_page = CheckoutCompletePage(context.driver)
 
 def before_scenario(context, scenario):
-    context.driver.execute_script("window.localStorage.clear();")
-    context.driver.execute_script("window.sessionStorage.clear();")
-    print("Cleared localStorage and sessionStorage.")
-    context.driver.delete_all_cookies() 
     context.driver.get(context.base_url)
     context.driver.maximize_window()
-    print(f"Navigated to base URL: {context.base_url}")
+    context.driver.delete_all_cookies() 
+    context.driver.execute_script("window.localStorage.clear();")
+    context.driver.execute_script("window.sessionStorage.clear();")
 
 def after_scenario(context, scenario):
     try:
