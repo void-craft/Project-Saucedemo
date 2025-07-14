@@ -29,7 +29,6 @@ class ProductsPage(BasePage):
             buttons = self.wait_for_elements(self.ALL_REMOVE_BUTTONS_BY_TEXT, timeout=5)
             for button in buttons:
                 self.driver.execute_script("arguments[0].click();", button)
-            print("All visible items removed from cart.")
             self.is_cart_badge_not_present()
         except TimeoutException:
             print("No 'Remove' buttons found on the page to click (cart might already be empty).")

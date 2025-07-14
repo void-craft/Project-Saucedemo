@@ -1,6 +1,6 @@
 # features/checkout.feature
+@checkout
 Feature: Saucedemo Checkout Process
-  
   As a logged-in user with items in my cart,
   I want to successfully complete an order,
   And also handle invalid checkout information.
@@ -16,7 +16,7 @@ Feature: Saucedemo Checkout Process
     When the user clicks the shopping cart link
     Then the user should see the shopping cart page with "Sauce Labs Backpack"
 
-  @successful_checkout
+  @valid_checkout
   Scenario: Successful checkout with valid information
     When the user clicks the checkout button
     Then the user should see the checkout information page
@@ -26,7 +26,7 @@ Feature: Saucedemo Checkout Process
     And the user should see "Sauce Labs Backpack" in the order summary
     When the user clicks the finish button
     Then the user should see the checkout complete page
-    And the user should see a "THANK YOU FOR YOUR ORDER" message
+    And the user should see a "Thank you for your order!" message
 
   @invalid_checkout
   Scenario Outline: Checkout with invalid or missing information

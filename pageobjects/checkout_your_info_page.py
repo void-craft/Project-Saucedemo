@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from pageobjects.base_page import BasePage
 
 
-class CheckoutYourInformationPage(BasePage):
+class CheckoutYourInfoPage(BasePage):
     CHECKOUT_INFO_TITLE = (By.CSS_SELECTOR, ".title")
     FIRST_NAME_INPUT = (By.ID, "first-name")
     LAST_NAME_INPUT = (By.ID, "last-name")

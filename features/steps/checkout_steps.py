@@ -2,7 +2,7 @@
 from behave import *
 from pageobjects.products_page import ProductsPage
 from pageobjects.shopping_cart_page import ShoppingCartPage
-from pageobjects.checkout_your_info_page import CheckoutYourInformationPage
+from pageobjects.checkout_your_info_page import CheckoutYourInfoPage
 from pageobjects.checkout_overview_page import CheckoutOverviewPage
 from pageobjects.checkout_complete_page import CheckoutCompletePage
 
@@ -30,13 +30,12 @@ def click_checkout_button(context):
 def verify_checkout_info_page(context):
     context.checkout_info_page.verify_on_checkout_info_page()
 
-
 @when('the user enters checkout information "{first_name}", "{last_name}", "{postal_code}"')
-def enter_checkout_info(context, first_name, last_name, postal_code):
+def step_impl(context, first_name, last_name, postal_code):
     first_name_val = "" if first_name == "<BLANK>" else first_name
     last_name_val = "" if last_name == "<BLANK>" else last_name
     postal_code_val = "" if postal_code == "<BLANK>" else postal_code
-    context.checkout_info_page.enter_checkout_information(first_name, last_name, postal_code)
+    context.checkout_info_page.enter_checkout_information(first_name_val, last_name_val, postal_code_val)
 
 @when('the user clicks the continue button')
 def click_continue_button(context):
