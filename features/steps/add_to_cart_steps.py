@@ -1,32 +1,25 @@
-import time
-
+# features/steps/add_to_cart_steps.py
 from behave import *
-from selenium import webdriver
 from pageobjects.login_page import LoginPage
 from pageobjects.products_page import ProductsPage
+from pageobjects.base_page import BasePage
 
 
 @when('the user enters the username "standard_user"')
 def enter_username(context):
-    context.login_page = LoginPage(context.driver)
     context.login_page.enter_username(context.login_page.STANDARD_USERNAME)
 
 
 @when('the user adds the items to the cart')
 def add_items(context):
-    context.products_page = ProductsPage(context.driver)
-    context.products_page.add_or_remove_items(context.products_page.BUTTON_ADD_TO_CART_XPATH)
-
+    context.products_page.add_item_to_cart_by_name("sauce-labs-backpack")
 
 @then('the user should see the total number of cart items')
 def validate_total_items(context):
-    time.sleep(3)
-    cart_icon = context.products_page.is_cart_icon_present(context.products_page.COUNTER_TOTAL_ITEMS_XPATH)
-    if cart_icon:
-        print("Add to cart test passed.")
-        assert True
-    else:
-        print("Add to cart test failed.")
-        assert False
+    actual_count = context.products_page.get_cart_item_count()
+    expected_count = 1
+    assert actual_count > 0, "Cart badge is not visible or shows 0 items."
+    assert actual_count == expected_count, \
+        f"Expected {expected_count} item(s) in cart, but found {actual_count}."
 
-
+    print(f"Add to cart test passed. Cart count: {actual_count}.")

@@ -1,6 +1,7 @@
+# features/steps/common_steps.py
 import time
 from behave import *
-from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from pageobjects.login_page import LoginPage
 from pageobjects.products_page import ProductsPage
 from pageobjects.base_page import BasePage
@@ -8,13 +9,7 @@ from pageobjects.base_page import BasePage
 
 @given('the user is on the saucedemo website')
 def open_website(context):
-    options = webdriver.ChromeOptions()
-    options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    context.driver = webdriver.Chrome(options=options)
-    context.login_page = LoginPage(context.driver)
-    context.driver.get(context.login_page.URL)
-    context.login_page.maximize_window()
-
+    pass
 
 @given('the user enters the password')
 def enter_password(context):
@@ -25,6 +20,14 @@ def enter_password(context):
 def press_login(context):
     context.login_page.click_login_button()
 
+@when('the user dismisses the password change popup if present')
+def step_impl(context):
+    try:
+        ok_button = context.driver.find_element(By.XPATH, "//button[text()='OK']")
+        ok_button.click()
+        print("Closed 'Change Password' popup.")
+    except NoSuchElementException:
+        pass
 
 @then('the user should see the products page')
 def verify_products_page(context):
@@ -52,4 +55,4 @@ def verify_products_page(context):
 
 @then('the user closes the browser')
 def close_browser(context):
-    context.driver.close()
+    pass
