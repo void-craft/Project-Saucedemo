@@ -1,4 +1,5 @@
-from selenium.common.exceptions import TimeoutException
+# pageobjects/products_page.py
+from selenium.common.exceptions import TimeoutException, NoSuchElementException # Ensure NoSuchElementException is imported
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
@@ -8,33 +9,30 @@ from pageobjects.base_page import BasePage
 class ProductsPage(BasePage):
     SPAN_TITLE_CSS = (By.CSS_SELECTOR, "span.title")
     IMAGE_PRODUCTS_TAG = (By.CSS_SELECTOR, ".inventory_item_img img")
-    ADD_TO_CART_BUTTON_PREFIX = "add-to-cart-"
-    REMOVE_BUTTON_PREFIX = "remove-"
+    SHOPPING_CART_LINK = (By.CSS_SELECTOR, ".shopping_cart_link")
+    ADD_TO_CART_BUTTON = (By.CSS_SELECTOR, "[data-test='add-to-cart-sauce-labs-backpack']")
+    REMOVE_FROM_CART_BUTTON = (By.CSS_SELECTOR, "[data-test='remove-sauce-labs-backpack']")
+    ALL_REMOVE_BUTTONS_BY_TEXT = (By.XPATH, "//button[text()='Remove']")
     COUNTER_TOTAL_ITEMS_XPATH = (By.XPATH, "//span[@class='shopping_cart_badge']")
 
     def __init__(self, driver):
         super().__init__(driver)
 
-    def add_item_to_cart_by_name(self, item_raw_name):
-        data_test_value = f"{self.ADD_TO_CART_BUTTON_PREFIX}{item_raw_name}"
-        locator = (By.ID, data_test_value)
-        self.click_element(locator)
-
-
-    def remove_item_from_cart_by_name(self, item_raw_name):
-        data_test_value = f"{self.REMOVE_BUTTON_PREFIX}{item_raw_name}"
-        locator = (By.ID, data_test_value)
-        self.click_element(locator)
-
+    def add_item_to_cart(self):
+        self.click_element(self.ADD_TO_CART_BUTTON)
+        
+    def remove_item_from_cart(self):
+        self.click_element(self.REMOVE_FROM_CART_BUTTON)
 
     def remove_all_items_from_cart(self):
-        ALL_REMOVE_BUTTONS = (By.XPATH, "//button[text()='Remove']")
         try:
-            buttons = self.wait_for_elements(ALL_REMOVE_BUTTONS, timeout=5)
+            buttons = self.wait_for_elements(self.ALL_REMOVE_BUTTONS_BY_TEXT, timeout=5)
             for button in buttons:
-                button.click()
+                self.driver.execute_script("arguments[0].click();", button)
+            print("All visible items removed from cart.")
+            self.is_cart_badge_not_present()
         except TimeoutException:
-            print("No 'Remove' buttons found on the page to click.")
+            print("No 'Remove' buttons found on the page to click (cart might already be empty).")
 
     def get_cart_item_count(self):
         try:
@@ -56,3 +54,6 @@ class ProductsPage(BasePage):
             return True
         except TimeoutException:
             return False
+
+    def click_shopping_cart_link(self):
+        self.click_element(self.SHOPPING_CART_LINK)

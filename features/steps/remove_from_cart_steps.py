@@ -4,7 +4,7 @@ from pageobjects.products_page import ProductsPage
 
 @when('the user removes the items from the cart')
 def remove_items(context):
-    context.products_page.remove_all_items_from_cart()
+    context.products_page.remove_item_from_cart()
 
 
 @then('the user should not see the counter')

@@ -7,6 +7,7 @@ Feature: Saucedemo Remove from cart
     When the user enters the username "standard_user"
     And the user clicks the login button
     Then the user should see the products page
-    And the user should see the total number of cart items
+    When the user adds the items to the cart
+    Then the user should see the total number of cart items
     When the user removes the items from the cart
     Then the user should not see the counter
