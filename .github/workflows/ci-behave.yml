@@ -2,9 +2,9 @@ name: Selenium BDD Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, test ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, test ]
   schedule:
     # Run tests daily at 2 AM UTC
     - cron: '0 2 * * *'
@@ -16,7 +16,8 @@ jobs:
     strategy:
       matrix:
         python-version: [3.9, 3.10, 3.11]
-        browser: [chrome, firefox]
+        # Only Chrome since your environment.py is configured for Chrome
+        browser: [chrome]
     
     steps:
     - name: Checkout code
@@ -41,27 +42,28 @@ jobs:
         pip install -r requirements.txt
         # Install additional dependencies for CI
         pip install allure-behave
+        # Install ChromeDriver via webdriver-manager for CI compatibility
+        pip install webdriver-manager
     
     - name: Set up Chrome and ChromeDriver
-      if: matrix.browser == 'chrome'
       uses: browser-actions/setup-chrome@v1
       with:
         chrome-version: stable
-    
-    - name: Set up Firefox and GeckoDriver
-      if: matrix.browser == 'firefox'
-      uses: browser-actions/setup-firefox@v1
-      with:
-        firefox-version: latest
     
     - name: Setup display for headless mode
       run: |
         sudo apt-get update
         sudo apt-get install -y xvfb
         export DISPLAY=:99
-        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
     
-    - name: Create necessary directories
+    - name: Setup ChromeDriver for CI
+      run: |
+        # Install ChromeDriver using webdriver-manager
+        python -c "from webdriver_manager.chrome import ChromeDriverManager; ChromeDriverManager().install()"
+        # Make sure chromedriver is in PATH
+        export PATH=$PATH:~/.wdm/drivers/chromedriver/*/
+        which chromedriver || echo "ChromeDriver not found in PATH"
       run: |
         mkdir -p allure_reports/screenshots
         mkdir -p test-results
@@ -81,14 +83,14 @@ jobs:
       uses: actions/upload-artifact@v3
       if: always()
       with:
-        name: test-results-${{ matrix.python-version }}-${{ matrix.browser }}
+        name: test-results-${{ matrix.python-version }}-chrome
         path: test-results/
     
     - name: Upload screenshots on failure
       uses: actions/upload-artifact@v3
       if: failure()
       with:
-        name: screenshots-${{ matrix.python-version }}-${{ matrix.browser }}
+        name: screenshots-${{ matrix.python-version }}-chrome
         path: allure_reports/screenshots/
     
     - name: Generate Allure report
@@ -107,7 +109,7 @@ jobs:
       uses: actions/upload-artifact@v3
       if: always()
       with:
-        name: allure-report-${{ matrix.python-version }}-${{ matrix.browser }}
+        name: allure-report-${{ matrix.python-version }}-chrome
         path: allure-report/
     
     - name: Publish test results
@@ -115,7 +117,7 @@ jobs:
       if: always()
       with:
         files: test-results/*.xml
-        check_name: "Test Results (${{ matrix.python-version }}, ${{ matrix.browser }})"
+        check_name: "Test Results (${{ matrix.python-version }}, Chrome)"
 
   # Optional: Deploy test reports to GitHub Pages
   deploy-reports:
