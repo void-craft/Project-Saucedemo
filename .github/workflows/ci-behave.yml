@@ -4,63 +4,55 @@ name: CI/CD - Behave UI Tests
 
 on:
   push:
-    branches: [ main, test ] # Triggers the workflow on pushes to main or test branches
+    branches: [ main, test ]
   pull_request:
-    branches: [ main, test ] # Triggers the workflow on pull requests targeting main or test
-  workflow_dispatch: # Allows you to manually trigger the workflow from the GitHub UI
+    branches: [ main, test ]
+  workflow_dispatch:
 
-# Permissions required for GitHub Pages deployment and writing workflow history
 permissions:
-  contents: write # Needed to commit allure history to the gh-pages branch (if keeping history)
-  pages: write    # Needed to deploy the report to GitHub Pages
-  id-token: write # Needed for OIDC authentication by actions/deploy-pages
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest # Uses the latest Ubuntu Linux runner
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4 # Action to check out your repository code
+      uses: actions/checkout@v4
 
     - name: Set up Python environment
-      uses: actions/setup-python@v5 # Action to set up Python
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.12' # Recommended: '3.12' for better runner compatibility. (If '3.13' works fine for you, keep it.)
+        python-version: '3.12' # Recommended: '3.12' for better runner compatibility.
 
     - name: Install Python dependencies & Allure Commandline
       run: |
-        python -m pip install --upgrade pip # Upgrade pip
+        python -m pip install --upgrade pip
         pip install -r requirements.txt      # Install your project's dependencies
-        # Install Allure Commandline - essential for generating Allure HTML reports
-        sudo apt-get update
+        
+        sudo apt-get update                                 
+        sudo apt-get install -y software-properties-common   
+        sudo add-apt-repository ppa:qameta/allure           
+        sudo apt-get update                                  
         sudo apt-get install -y allure-commandline
 
     - name: Run Behave tests and generate raw Allure results
-      # This command executes your Behave tests and saves the raw Allure data.
-      # '|| true' ensures this step doesn't immediately fail the workflow if tests fail,
-      # allowing the Allure report generation step to still run.
       run: behave -f allure_behave.formatter:AllureFormatter -o allure-results/ ./features/ || true
 
     - name: Generate Allure HTML Report
-      # --- NEW STEP: Explicitly generate the HTML report using the installed allure-commandline ---
-      # '--clean' removes previous report artifacts before generating new ones.
-      # '-o allure-report/' specifies the output directory for the HTML report.
       run: allure generate --clean allure-results/ -o allure-report/
-      if: always() # Always run this step, even if tests failed, to ensure report generation
+      if: always()
 
-    # --- Standard GitHub Pages Deployment Actions ---
     - name: Setup GitHub Pages
-      # Configures the GitHub Pages environment
       uses: actions/configure-pages@v5
 
     - name: Upload Allure Report Artifact for Pages Deployment
-      # Uploads the generated HTML report (from 'allure-report/') as an artifact ready for GitHub Pages
       uses: actions/upload-pages-artifact@v3
       with:
-        path: allure-report # This is the folder containing the generated HTML report
+        path: allure-report
 
     - name: Deploy to GitHub Pages
-      # Deploys the uploaded artifact to your GitHub Pages site
       id: deployment
       uses: actions/deploy-pages@v4
