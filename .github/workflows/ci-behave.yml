@@ -33,7 +33,7 @@ jobs:
 
     - name: Install Allure Commandline
       run: |
-        ALLURE_VERSION=2.24.1  # Recommended stable version
+        ALLURE_VERSION=2.24.1
         ALLURE_URL="https://github.com/allure-framework/allure2/releases/download/$ALLURE_VERSION/allure-$ALLURE_VERSION.zip"
         
         echo "Downloading Allure from $ALLURE_URL"
@@ -44,9 +44,7 @@ jobs:
 
     - name: Run Behave tests
       run: |
-        behave -f allure_behave.formatter:AllureFormatter -o allure-results/ ./features/
-        # Force success even if tests fail to generate report
-        exit 0
+        behave -f allure_behave.formatter:AllureFormatter -o allure-results/ ./features/ || true
 
     - name: Generate Allure report
       if: always()
@@ -56,9 +54,18 @@ jobs:
 
     - name: Upload Allure report as artifact
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: allure-report
+        path: allure-report
+        retention-days: 7
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
         path: allure-report
 
     - name: Deploy to GitHub Pages
