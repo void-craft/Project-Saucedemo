@@ -4,64 +4,94 @@ name: CI/CD - Behave UI Tests
 
 on:
   push:
-    branches: [ main, test ]
+    branches: [ main, test ] # Triggers the workflow on pushes to main or test branches
   pull_request:
-    branches: [ main, test ]
-  workflow_dispatch:
+    branches: [ main, test ] # Triggers the workflow on pull requests targeting main or test
+  workflow_dispatch: # Allows you to manually trigger the workflow from the GitHub UI
 
+# Permissions required for GitHub Pages deployment and writing workflow history
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: write # Needed for actions/checkout and for committing history (if keep_history is true)
+  pages: write    # Needed to deploy the report to GitHub Pages
+  id-token: write # Needed for OIDC authentication by actions/deploy-pages (standard practice)
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-22.04 # This should now be correct
+    runs-on: ubuntu-22.04 # Using Ubuntu 22.04 LTS (Jammy Jellyfish) for broader compatibility with some tools.
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4 # Action to check out your repository code
 
     - name: Set up Python environment
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v5 # Action to set up Python
       with:
-        python-version: '3.12' 
+        python-version: '3.12' # Recommended: '3.12' for good runner compatibility.
 
     - name: Install Python dependencies & Allure Commandline
       run: |
+        # Upgrade pip to the latest version
         python -m pip install --upgrade pip
+        # Install project-specific Python dependencies from requirements.txt
         pip install -r requirements.txt      
         
-        # --- FIX: Update ALLURE_VERSION to the latest (2.34.1) ---
-        ALLURE_VERSION="2.34.1" # <--- UPDATE THIS LINE
+        # --- Install Allure Commandline (Robust Manual Installation) ---
+        # Define the Allure version to download. Check https://github.com/allure-framework/allure2/releases for latest.
+        ALLURE_VERSION="2.34.1" # Using the version you identified from releases.
         ALLURE_DOWNLOAD_URL="https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-commandline-${ALLURE_VERSION}.zip"
-        ALLURE_INSTALL_DIR="/opt/allure"
+        ALLURE_INSTALL_DIR="${HOME}/allure-commandline" # Install into user's home directory for permissions
         
         echo "Downloading Allure Commandline from ${ALLURE_DOWNLOAD_URL}..."
-        curl -L "${ALLURE_DOWNLOAD_URL}" -o allure.zip
+        # curl options:
+        # -f : Fail silently on HTTP errors (e.g., 404).
+        # -s : Silent mode (don't show progress meter or error messages).
+        # -S : Show error (when -s is used, this ensures errors are still printed).
+        # -L : Follow redirects (crucial for GitHub release downloads).
+        # --retry 5 : Retry up to 5 times on transient connection errors.
+        # --retry-delay 5 : Wait 5 seconds between retries.
+        curl -fsSL --retry 5 --retry-delay 5 "${ALLURE_DOWNLOAD_URL}" -o allure.zip
         
-        sudo mkdir -p "${ALLURE_INSTALL_DIR}"
-        sudo unzip allure.zip -d "${ALLURE_INSTALL_DIR}"
+        # Check if download was successful and the file exists/is not empty
+        if [ ! -s "allure.zip" ]; then # -s checks if file exists and is not empty
+          echo "Error: allure.zip was not downloaded successfully or is empty."
+          exit 1
+        fi
         
+        # Create install directory and unzip Allure
+        mkdir -p "${ALLURE_INSTALL_DIR}" # Use mkdir directly, sudo not always needed in home dir
+        unzip allure.zip -d "${ALLURE_INSTALL_DIR}"
+        
+        # Add Allure's bin directory to the GitHub Actions runner's PATH
+        # This makes the 'allure' command available to subsequent steps.
         echo "${ALLURE_INSTALL_DIR}/allure-commandline-${ALLURE_VERSION}/bin" >> $GITHUB_PATH
         echo "Allure Commandline ${ALLURE_VERSION} installed to ${ALLURE_INSTALL_DIR}"
         # -----------------------------------------------------------
 
     - name: Run Behave tests and generate raw Allure results
+      # This command executes your Behave tests and saves the raw Allure data.
+      # '|| true' ensures this step doesn't immediately fail the workflow if tests fail,
+      # allowing the Allure report generation and deployment steps to still run.
       run: behave -f allure_behave.formatter:AllureFormatter -o allure-results/ ./features/ || true
 
     - name: Generate Allure HTML Report
+      # This step explicitly generates the interactive HTML report from the raw results.
+      # '--clean' ensures old reports are removed before new ones are generated.
+      # This step runs even if tests failed (due to '|| true' above), ensuring a report of failures.
       run: allure generate --clean allure-results/ -o allure-report/
-      if: always()
+      if: always() # Ensure this step always runs, regardless of prior step success/failure
 
+    # --- Standard GitHub Pages Deployment Actions ---
     - name: Setup GitHub Pages
+      # Configures the GitHub Pages environment
       uses: actions/configure-pages@v5
 
     - name: Upload Allure Report Artifact for Pages Deployment
+      # Uploads the generated HTML report (from 'allure-report/') as an artifact ready for GitHub Pages.
       uses: actions/upload-pages-artifact@v3
       with:
-        path: allure-report
+        path: allure-report # The folder containing the generated HTML report
 
     - name: Deploy to GitHub Pages
+      # Deploys the uploaded artifact to your GitHub Pages site.
       id: deployment
       uses: actions/deploy-pages@v4
