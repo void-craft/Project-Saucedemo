@@ -1,0 +1,34 @@
+# .github/workflows/ci-behave-minimal.yml
+
+name: CI - Behave UI Tests (Minimal)
+
+on:
+  push:
+    branches: [ main, test ] # Triggers the workflow on pushes to main or test branches
+  pull_request:
+    branches: [ main, test ] # Triggers the workflow on pull requests targeting main or test
+  workflow_dispatch: # Allows you to manually trigger the workflow from the GitHub UI
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner image
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4 # Action to check out your repository code
+
+    - name: Set up Python environment
+      uses: actions/setup-python@v5 # Action to set up Python
+      with:
+        python-version: '3.12' # IMPORTANT: Specify your project's Python version (e.g., '3.9', '3.10', '3.11', '3.12')
+                               # Use a stable version that's well-supported on runners.
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip # Upgrade pip
+        pip install -r requirements.txt      # Install your project's dependencies
+
+    - name: Run Behave tests
+      # This command executes your Behave tests.
+      # If any test fails, this step will fail, and thus the entire workflow will fail.
+      run: behave ./features/
