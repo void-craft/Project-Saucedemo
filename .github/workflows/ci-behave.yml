@@ -33,9 +33,7 @@ jobs:
         pip install -r requirements.txt      
         
         ALLURE_VERSION="2.34.1" # Correct version
-        # --- FIX: Correct the download URL format ---
-        ALLURE_DOWNLOAD_URL="https://github.com/allure-framework/allure2/releases/download/allure-${ALLURE_VERSION}/allure-commandline-${ALLURE_VERSION}.zip" # <--- UPDATED THIS LINE
-        # --------------------------------------------
+        ALLURE_DOWNLOAD_URL="https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-commandline-${ALLURE_VERSION}.zip"
         ALLURE_INSTALL_DIR="${HOME}/allure-commandline"
         
         echo "Downloading Allure Commandline from ${ALLURE_DOWNLOAD_URL}..."
