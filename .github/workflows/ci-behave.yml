@@ -4,9 +4,9 @@ name: CI/CD - Behave UI Tests
 
 on:
   push:
-    branches: [ main, test ] # Triggers the workflow on pushes to main or develop branches
+    branches: [ main, test ] # Triggers the workflow on pushes to main or test branches
   pull_request:
-    branches: [ main, test ] # Triggers the workflow on pull requests targeting main or develop
+    branches: [ main, test ] # Triggers the workflow on pull requests targeting main or test
   workflow_dispatch: # Allows you to manually trigger the workflow from the GitHub UI
 
 # Permissions required for GitHub Pages deployment and writing workflow history
@@ -24,9 +24,11 @@ jobs:
       uses: actions/checkout@v4 # Action to check out your repository code
 
     - name: Set up Python environment
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v5 # Action to set up Python
       with:
-        python-version: '3.13'
+        python-version: '3.12' # Recommended: Change to '3.12' for better runner compatibility.
+                               # If '3.13' works fine, keep it.
+
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip # Upgrade pip
@@ -36,17 +38,23 @@ jobs:
         sudo apt-get install -y allure-commandline
 
     - name: Run Behave tests and generate raw Allure results
+      # This command executes your Behave tests and saves the raw Allure data.
+      # '|| true' ensures this step doesn't immediately fail the workflow if tests fail,
+      # allowing the Allure report generation step to still run.
       run: behave -f allure_behave.formatter:AllureFormatter -o allure-results/ ./features/ || true
 
     - name: Generate Allure Report and History
+      # This action generates the interactive HTML report from the raw results
+      # and handles the history for trend analysis in Allure.
       uses: allure-framework/allure-action@5d73ab37877b34f5bebfad475175af8cc908f301 # Using the specific commit SHA for stability
       if: always() # Always run this step, even if tests failed, to get a report
       with:
         allure_results_folder: allure-results  # Input: folder with raw Allure data from previous step
         allure_report_folder: allure-report    # Output: folder where HTML report will be generated
         allure_history_folder: allure-history  # Optional: for trends/history in Allure reports
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        allure_report_url: https://github.com/void-craft/SauceDemo-Selenium-BDD/
+        github_token: ${{ secrets.GITHUB_TOKEN }} # Built-in token, automatically available
+        # CRITICAL FIX: This URL should be your GitHub Pages domain, not the repository URL.
+        allure_report_url: https://void-craft.github.io/SauceDemo-Selenium-BDD/ # <--- ***CORRECTED URL***
         keep_history: true # Recommended for trends in Allure report
 
     - name: Setup GitHub Pages
@@ -60,5 +68,6 @@ jobs:
         path: allure-report # The folder containing the generated HTML report from previous step
 
     - name: Deploy to GitHub Pages
+      # Deploys the uploaded artifact to your GitHub Pages site
       id: deployment
       uses: actions/deploy-pages@v4
