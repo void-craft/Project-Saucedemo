@@ -1,0 +1,58 @@
+# .github/workflows/ci-behave.yml
+
+name: CI/CD - Behave UI Tests
+
+on:
+  push:
+    branches: [ main, tests ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write 
+  id-token: write
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python environment
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip # Upgrade pip
+        pip install -r requirements.txt      # Install your project's dependencies
+        # Install Allure Commandline - essential for generating Allure HTML reports
+        sudo apt-get update
+        sudo apt-get install -y allure-commandline
+
+    - name: Run Behave tests and generate raw Allure results
+      run: behave -f allure_behave.formatter:AllureFormatter -o allure-results/ ./features/ || true
+
+    - name: Generate Allure Report and History
+      uses: simple-elf/allure-action@v1.4.1
+      if: always()
+      with:
+        allure_results_folder: allure-results
+        allure_report_folder: allure-report
+        allure_history_folder: allure-history
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        allure_report_url: https://your-username.github.io/Project-SauceDemo/
+
+    - name: Setup GitHub Pages
+      uses: actions/configure-pages@v5
+
+    - name: Upload Allure Report Artifact for Pages Deployment
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: allure-report 
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
