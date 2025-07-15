@@ -1,10 +1,12 @@
+# .github/workflows/ci-behave.yml
+
 name: CI/CD - Behave UI Tests
 
 on:
   push:
-    branches: [main, test]
+    branches: [ main, test ]
   pull_request:
-    branches: [main, test]
+    branches: [ main, test ]
   workflow_dispatch:
 
 permissions:
@@ -13,9 +15,9 @@ permissions:
   id-token: write
 
 jobs:
-  test:
+  test: # Changed job name from build-and-test, which is fine
     runs-on: ubuntu-22.04
-    timeout-minutes: 15
+    timeout-minutes: 15 # Added timeout, good practice
 
     steps:
     - name: Checkout code
@@ -33,24 +35,44 @@ jobs:
 
     - name: Install Allure Commandline (fixed path)
       run: |
-        ALLURE_VERSION=2.24.1
-        ALLURE_URL="https://github.com/allure-framework/allure2/releases/download/$ALLURE_VERSION/allure-$ALLURE_VERSION.zip"
+        ALLURE_VERSION="2.34.1" # <--- Confirmed from your screenshot
+        # --- FIX: Correct the download URL and local ZIP name ---
+        # The asset name is allure-2.34.1.zip
+        # The path it is often under in releases is /download/allure-2.34.1/
+        ALLURE_DOWNLOAD_URL="https://github.com/allure-framework/allure2/releases/download/allure-${ALLURE_VERSION}/allure-${ALLURE_VERSION}.zip"
+        ALLURE_ZIP_FILE="allure-${ALLURE_VERSION}.zip" # Local name for the downloaded zip
+        ALLURE_INSTALL_DIR="${HOME}/allure" # Where we will unzip it to
         
-        echo "Downloading Allure from $ALLURE_URL"
-        curl -L "$ALLURE_URL" -o allure.zip
-        unzip allure.zip -d allure
-        echo "$(pwd)/allure/allure-$ALLURE_VERSION/bin" >> $GITHUB_PATH
-        rm allure.zip
-        allure --version
+        echo "Downloading Allure from ${ALLURE_DOWNLOAD_URL}"
+        curl -fsSL --retry 5 --retry-delay 5 "${ALLURE_DOWNLOAD_URL}" -o "${ALLURE_ZIP_FILE}"
+        
+        # Check if download was successful
+        if [ ! -s "${ALLURE_ZIP_FILE}" ]; then
+          echo "Error: ${ALLURE_ZIP_FILE} was not downloaded successfully or is empty."
+          exit 1
+        fi
+        
+        # Create installation directory and unzip (ensure to unzip the correct file name)
+        mkdir -p "${ALLURE_INSTALL_DIR}"
+        # Unzip command needs the downloaded file name, and then specify target directory
+        unzip "${ALLURE_ZIP_FILE}" -d "${ALLURE_INSTALL_DIR}"
+        
+        # Add Allure bin directory to PATH (the unzipped folder structure is usually 'allure/allure-X.Y.Z/bin')
+        # Based on your unzip output "creating: allure/allure-2.24.1/", the path will be allure/allure-VERSION/bin
+        echo "${ALLURE_INSTALL_DIR}/allure/allure-${ALLURE_VERSION}/bin" >> $GITHUB_PATH
+        echo "Allure Commandline ${ALLURE_VERSION} installed to ${ALLURE_INSTALL_DIR}/allure/allure-${ALLURE_VERSION}/"
+        
+        # Clean up the downloaded zip file
+        rm "${ALLURE_ZIP_FILE}"
 
+    # Adding pkill lines (from your provided code) for robustness, although often not strictly needed on clean runners
     - name: Clear any existing WebDriver processes
       run: |
         pkill -f chromedriver || true
         pkill -f geckodriver || true
 
     - name: Run Behave tests with Allure reporting
-      run: |
-        behave -f allure_behave.formatter:AllureFormatter -o allure-results/ ./features/ || true
+      run: behave -f allure_behave.formatter:AllureFormatter -o allure-results/ ./features/ || true
 
     - name: Generate Allure report
       if: always()
@@ -66,8 +88,9 @@ jobs:
         retention-days: 7
 
     - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main' # Only deploy from main branch (good practice)
       uses: actions/upload-pages-artifact@v3
       with:
         path: allure-report
-      # Then add the deploy-pages step if you have Pages enabled
+      # This step should be followed by actions/deploy-pages@v4, which is outside this snippet.
+      # Ensure you have it correctly after this upload-pages-artifact step.
