@@ -31,7 +31,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        # allure-commandline is installed via apt-get for Ubuntu runners
         sudo apt-get update
         sudo apt-get install -y allure-commandline
 
@@ -39,26 +38,25 @@ jobs:
       run: behave -f allure_behave.formatter:AllureFormatter -o allure-results/ ./features/ || true
 
     - name: Generate and Deploy Allure Report to GitHub Pages
-      # --- REPLACE THE PREVIOUS simple-elf/allure-action STEP WITH THIS ---
-      uses: allure-framework/allure-action@v2 # Using the official Allure Action
-      if: always() # Always run this step, even if tests failed, to get a report
+      # --- FIX IS HERE ---
+      # Use a specific existing version tag like v2.10.0 (or check GitHub Marketplace for latest recommended v2.x.y)
+      uses: allure-framework/allure-action@v2.10.0 # <--- CORRECTED VERSION TAG
+      if: always()
       with:
-        allure_results_folder: allure-results # Path to your raw Allure results
-        allure_report_folder: allure-report   # Output folder for the generated HTML report
-        allure_history_folder: allure-history # Optional: for trends and history
-        github_token: ${{ secrets.GITHUB_TOKEN }} # Built-in token
+        allure_results_folder: allure-results
+        allure_report_folder: allure-report
+        allure_history_folder: allure-history
+        github_token: ${{ secrets.GITHUB_TOKEN }}
         allure_report_url: https://your-username.github.io/Project-SauceDemo/ # <--- ***UPDATE THIS LINE***
-        keep_history: true # Recommended for trends over time
-        # The official action automatically handles the generation and provides output for Pages.
+        keep_history: true
         
     - name: Setup GitHub Pages
       uses: actions/configure-pages@v5
 
     - name: Upload Allure Report Artifact for Pages Deployment
-      # The 'path' here should be the folder where the allure-action generates its report
       uses: actions/upload-pages-artifact@v3
       with:
-        path: allure-report # This should match allure_report_folder above
+        path: allure-report
 
     - name: Deploy to GitHub Pages
       id: deployment
